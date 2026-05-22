@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "beads-acp.fullname" . }}-mcp
+  labels:
+    {{- include "beads-acp.componentLabels" (dict "component" "mcp" "context" .) | nindent 4 }}
+spec:
+  type: ClusterIP
+  ipFamilyPolicy: PreferDualStack
+  ports:
+    {{- if .Values.oauthProxy.enabled }}
+    - port: {{ .Values.oauthProxy.port }}
+      targetPort: oauth-proxy
+      protocol: TCP
+      name: http
+    {{- else }}
+    - port: {{ .Values.mcp.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+    {{- end }}
+  selector:
+    {{- include "beads-acp.componentSelectorLabels" (dict "component" "mcp" "context" .) | nindent 4 }}

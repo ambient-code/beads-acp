@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "beads-acp.fullname" . }}-dolt
+  labels:
+    {{- include "beads-acp.componentLabels" (dict "component" "dolt" "context" .) | nindent 4 }}
+spec:
+  replicas: 1
+  serviceName: {{ include "beads-acp.fullname" . }}-dolt-headless
+  selector:
+    matchLabels:
+      {{- include "beads-acp.componentSelectorLabels" (dict "component" "dolt" "context" .) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "beads-acp.componentLabels" (dict "component" "dolt" "context" .) | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "beads-acp.serviceAccountName" (dict "component" "dolt" "context" .) }}
+      automountServiceAccountToken: false
+      hostIPC: false
+      hostNetwork: false
+      hostPID: false
+      securityContext:
+        runAsNonRoot: true
+        fsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: dolt
+          image: "{{ .Values.dolt.image.repository }}:{{ .Values.dolt.image.tag }}"
+          imagePullPolicy: {{ .Values.dolt.image.pullPolicy }}
+          env:
+            - name: DOLT_ROOT_PATH
+              value: /var/lib/dolt
+          ports:
+            - name: mysql
+              containerPort: {{ .Values.dolt.port }}
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: mysql
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: mysql
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          startupProbe:
+            tcpSocket:
+              port: mysql
+            failureThreshold: 30
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.dolt.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/dolt
+            - name: config
+              mountPath: /etc/dolt/servercfg.d/config.yaml
+              subPath: config.yaml
+            - name: tmp
+              mountPath: /tmp
+            {{- if .Values.dolt.tls.enabled }}
+            - name: tls
+              mountPath: /etc/dolt/tls
+              readOnly: true
+            {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "beads-acp.fullname" . }}-dolt-config
+        - name: tmp
+          emptyDir: {}
+        {{- if .Values.dolt.tls.enabled }}
+        - name: tls
+          secret:
+            secretName: {{ .Values.dolt.tls.secretName }}
+        {{- end }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        {{- if .Values.dolt.storage.storageClass }}
+        storageClassName: {{ .Values.dolt.storage.storageClass }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.dolt.storage.size }}

@@ -1,0 +1,22 @@
+dolt:
+  image:
+    repository: image-registry.openshift-image-registry.svc:5000/beads-acp-e2e/dolt-server
+    tag: latest
+  storage:
+    size: 5Gi
+    storageClass: gp3-csi
+
+mcp:
+  replicas: 1
+  image:
+    repository: image-registry.openshift-image-registry.svc:5000/beads-acp-e2e/beads-mcp
+    tag: latest
+
+oauthProxy:
+  enabled: false
+
+route:
+  enabled: true
+
+networkPolicy:
+  enabled: false

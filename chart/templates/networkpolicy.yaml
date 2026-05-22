@@ -1,0 +1,84 @@
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "beads-acp.fullname" . }}-default-deny
+  labels:
+    {{- include "beads-acp.labels" . | nindent 4 }}
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+# Allow MCP pods to reach Dolt
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "beads-acp.fullname" . }}-dolt-ingress
+  labels:
+    {{- include "beads-acp.componentLabels" (dict "component" "dolt" "context" .) | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "beads-acp.componentSelectorLabels" (dict "component" "dolt" "context" .) | nindent 6 }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "beads-acp.componentSelectorLabels" (dict "component" "mcp" "context" .) | nindent 14 }}
+      ports:
+        - port: {{ .Values.dolt.port }}
+          protocol: TCP
+---
+# Allow ingress to MCP from OpenShift router namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "beads-acp.fullname" . }}-mcp-ingress
+  labels:
+    {{- include "beads-acp.componentLabels" (dict "component" "mcp" "context" .) | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "beads-acp.componentSelectorLabels" (dict "component" "mcp" "context" .) | nindent 6 }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              network.openshift.io/policy-group: ingress
+      ports:
+        - port: {{ if .Values.oauthProxy.enabled }}{{ .Values.oauthProxy.port }}{{ else }}{{ .Values.mcp.port }}{{ end }}
+          protocol: TCP
+---
+# Allow MCP egress to Dolt and DNS only
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "beads-acp.fullname" . }}-mcp-egress
+  labels:
+    {{- include "beads-acp.componentLabels" (dict "component" "mcp" "context" .) | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "beads-acp.componentSelectorLabels" (dict "component" "mcp" "context" .) | nindent 6 }}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- include "beads-acp.componentSelectorLabels" (dict "component" "dolt" "context" .) | nindent 14 }}
+      ports:
+        - port: {{ .Values.dolt.port }}
+          protocol: TCP
+    - ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+{{- end }}

@@ -1,0 +1,13 @@
+FROM dolthub/dolt-sql-server:1.83.4
+
+LABEL org.opencontainers.image.source="https://github.com/ambient-code/beads-acp" \
+      org.opencontainers.image.description="Dolt SQL server for beads-acp (non-root wrapper)" \
+      org.opencontainers.image.version="1.83.4"
+
+# Create non-root user with GID 0 (OpenShift arbitrary UID convention)
+RUN useradd -u 1001 -g 0 -M -d /var/lib/dolt -s /usr/sbin/nologin dolt && \
+    mkdir -p /var/lib/dolt /etc/dolt/servercfg.d /etc/dolt/doltcfg.d /docker-entrypoint-initdb.d && \
+    chown -R 1001:0 /var/lib/dolt /etc/dolt /docker-entrypoint-initdb.d && \
+    chmod -R g=u /var/lib/dolt /etc/dolt /docker-entrypoint-initdb.d
+
+USER 1001

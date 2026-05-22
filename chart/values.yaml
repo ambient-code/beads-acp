@@ -1,0 +1,60 @@
+dolt:
+  image:
+    repository: image-registry.openshift-image-registry.svc:5000/beads-acp/dolt-server
+    tag: latest
+    pullPolicy: IfNotPresent
+  port: 3308
+  storage:
+    size: 20Gi
+    storageClass: gp3-csi
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: "2"
+      memory: 2Gi
+  tls:
+    enabled: true
+    secretName: dolt-serving-cert
+  config: {}
+
+mcp:
+  replicas: 1
+  image:
+    repository: image-registry.openshift-image-registry.svc:5000/beads-acp/beads-mcp
+    tag: latest
+    pullPolicy: IfNotPresent
+  port: 8080
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+
+oauthProxy:
+  enabled: true
+  image:
+    repository: registry.redhat.io/openshift4/ose-oauth-proxy
+    tag: v4.17
+    pullPolicy: IfNotPresent
+  port: 4180
+  cookieSecret: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+route:
+  enabled: true
+  host: ""
+  tls:
+    termination: edge
+
+networkPolicy:
+  enabled: true

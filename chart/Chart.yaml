@@ -1,0 +1,6 @@
+apiVersion: v2
+name: beads-acp
+description: Beads issue tracker in shared server mode for OpenShift
+type: application
+version: 0.1.0
+appVersion: "0.60.0"

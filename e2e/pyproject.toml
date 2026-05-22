@@ -1,0 +1,16 @@
+[project]
+name = "beads-acp-e2e"
+version = "0.1.0"
+description = "End-to-end simulation tests for beads-acp"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.28",
+    "rich>=14.0",
+    "plotly>=6.0",
+    "pandas>=2.2",
+    "click>=8.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

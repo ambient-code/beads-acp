@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "beads-acp.fullname" . }}-dolt-config
+  labels:
+    {{- include "beads-acp.componentLabels" (dict "component" "dolt" "context" .) | nindent 4 }}
+data:
+  config.yaml: |
+    log_level: info
+    listener:
+      host: 0.0.0.0
+      port: {{ .Values.dolt.port }}
+      {{- if .Values.dolt.tls.enabled }}
+      tls_cert: /etc/dolt/tls/tls.crt
+      tls_key: /etc/dolt/tls/tls.key
+      require_secure_transport: true
+      tls_minimum_version: "1.2"
+      {{- end }}
+    behavior:
+      autocommit: true
+    {{- with .Values.dolt.config }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}

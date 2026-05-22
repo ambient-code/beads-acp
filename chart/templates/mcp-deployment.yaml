@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "beads-acp.fullname" . }}-mcp
+  labels:
+    {{- include "beads-acp.componentLabels" (dict "component" "mcp" "context" .) | nindent 4 }}
+spec:
+  replicas: {{ .Values.mcp.replicas }}
+  selector:
+    matchLabels:
+      {{- include "beads-acp.componentSelectorLabels" (dict "component" "mcp" "context" .) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "beads-acp.componentSelectorLabels" (dict "component" "mcp" "context" .) | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "beads-acp.serviceAccountName" (dict "component" "mcp" "context" .) }}
+      automountServiceAccountToken: false
+      hostIPC: false
+      hostNetwork: false
+      hostPID: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: beads-mcp
+          image: "{{ .Values.mcp.image.repository }}:{{ .Values.mcp.image.tag }}"
+          imagePullPolicy: {{ .Values.mcp.image.pullPolicy }}
+          command: ["mcp-proxy"]
+          args:
+            - "--pass-environment"
+            - "--host"
+            - "0.0.0.0"
+            - "--port"
+            - "{{ .Values.mcp.port }}"
+            - "--"
+            - "beads-mcp"
+          env:
+            - name: BEADS_DOLT_SERVER_MODE
+              value: "1"
+            - name: BEADS_DOLT_SHARED_SERVER
+              value: "1"
+            - name: BEADS_DOLT_SERVER_HOST
+              value: "{{ include "beads-acp.fullname" . }}-dolt"
+            - name: BEADS_DOLT_SERVER_PORT
+              value: "{{ .Values.dolt.port }}"
+            - name: BEADS_DOLT_SERVER_TLS
+              value: "{{ if .Values.dolt.tls.enabled }}1{{ else }}0{{ end }}"
+            - name: BEADS_DOLT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "beads-acp.fullname" . }}-dolt-credentials
+                  key: BEADS_DOLT_PASSWORD
+          ports:
+            - containerPort: {{ .Values.mcp.port }}
+              name: http
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /status
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /status
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.mcp.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+        {{- if .Values.oauthProxy.enabled }}
+        - name: oauth-proxy
+          image: "{{ .Values.oauthProxy.image.repository }}:{{ .Values.oauthProxy.image.tag }}"
+          imagePullPolicy: {{ .Values.oauthProxy.image.pullPolicy }}
+          args:
+            - "--upstream=http://localhost:{{ .Values.mcp.port }}"
+            - "--http-address=0.0.0.0:{{ .Values.oauthProxy.port }}"
+            - "--cookie-secret-file=/etc/oauth/cookie-secret"
+            - "--provider=openshift"
+            - "--openshift-service-account={{ include "beads-acp.serviceAccountName" (dict "component" "mcp" "context" .) }}"
+          ports:
+            - containerPort: {{ .Values.oauthProxy.port }}
+              name: oauth-proxy
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.oauthProxy.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: oauth-cookie-secret
+              mountPath: /etc/oauth
+              readOnly: true
+        {{- end }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        {{- if .Values.oauthProxy.enabled }}
+        - name: oauth-cookie-secret
+          secret:
+            secretName: {{ include "beads-acp.fullname" . }}-oauth-cookie
+        {{- end }}
