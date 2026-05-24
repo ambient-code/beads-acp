@@ -8,8 +8,8 @@ import random
 import time
 from typing import Any
 
-from e2e.mcp_client import MCPClient, MCPError
-from e2e.metrics import MetricCollector, CRUD_MAP
+from mcp_client import MCPClient, MCPError
+from metrics import MetricCollector, CRUD_MAP
 
 logger = logging.getLogger(__name__)
 

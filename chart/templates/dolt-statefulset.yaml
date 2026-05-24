@@ -22,7 +22,6 @@ spec:
       hostPID: false
       securityContext:
         runAsNonRoot: true
-        fsGroup: 1001
         seccompProfile:
           type: RuntimeDefault
       containers:
@@ -31,6 +30,8 @@ spec:
           imagePullPolicy: {{ .Values.dolt.image.pullPolicy }}
           env:
             - name: DOLT_ROOT_PATH
+              value: /var/lib/dolt
+            - name: HOME
               value: /var/lib/dolt
           ports:
             - name: mysql
@@ -67,6 +68,8 @@ spec:
               subPath: config.yaml
             - name: tmp
               mountPath: /tmp
+            - name: dolt-global
+              mountPath: /.dolt
             {{- if .Values.dolt.tls.enabled }}
             - name: tls
               mountPath: /etc/dolt/tls
@@ -77,6 +80,8 @@ spec:
           configMap:
             name: {{ include "beads-acp.fullname" . }}-dolt-config
         - name: tmp
+          emptyDir: {}
+        - name: dolt-global
           emptyDir: {}
         {{- if .Values.dolt.tls.enabled }}
         - name: tls

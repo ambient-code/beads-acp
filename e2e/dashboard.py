@@ -12,7 +12,7 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from e2e.metrics import MetricCollector
+from metrics import MetricCollector
 
 CRUD_COLORS = {"C": "green", "R": "cyan", "U": "yellow", "D": "red"}
 

@@ -9,7 +9,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from e2e.metrics import MetricCollector
+from metrics import MetricCollector
 
 CRUD_COLORS = {"C": "#2ecc71", "R": "#3498db", "U": "#f39c12", "D": "#e74c3c"}
 

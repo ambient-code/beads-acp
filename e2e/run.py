@@ -8,12 +8,12 @@ import sys
 
 import click
 
-from e2e.dashboard import run_dashboard
-from e2e.deploy import DeployManager
-from e2e.mcp_client import MCPClient
-from e2e.metrics import MetricCollector
-from e2e.report import generate_report
-from e2e.scenarios import Scenario
+from dashboard import run_dashboard
+from deploy import DeployManager
+from mcp_client import MCPClient
+from metrics import MetricCollector
+from report import generate_report
+from scenarios import Scenario
 
 logger = logging.getLogger("e2e")
 
