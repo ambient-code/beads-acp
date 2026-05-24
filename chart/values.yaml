@@ -3,7 +3,7 @@ dolt:
     repository: image-registry.openshift-image-registry.svc:5000/beads-acp/dolt-server
     tag: latest
     pullPolicy: IfNotPresent
-  port: 3308
+  port: 3306
   storage:
     size: 20Gi
     storageClass: gp3-csi
