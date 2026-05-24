@@ -33,6 +33,11 @@ spec:
               value: /var/lib/dolt
             - name: HOME
               value: /var/lib/dolt
+            - name: BEADS_DOLT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "beads-acp.fullname" . }}-dolt-credentials
+                  key: BEADS_DOLT_PASSWORD
           ports:
             - name: mysql
               containerPort: {{ .Values.dolt.port }}
@@ -70,6 +75,8 @@ spec:
               mountPath: /tmp
             - name: dolt-global
               mountPath: /.dolt
+            - name: initdb
+              mountPath: /docker-entrypoint-initdb.d
             {{- if .Values.dolt.tls.enabled }}
             - name: tls
               mountPath: /etc/dolt/tls
@@ -83,6 +90,13 @@ spec:
           emptyDir: {}
         - name: dolt-global
           emptyDir: {}
+        - name: initdb
+          configMap:
+            name: {{ include "beads-acp.fullname" . }}-dolt-config
+            items:
+              - key: init-users.sh
+                path: init-users.sh
+                mode: 0755
         {{- if .Values.dolt.tls.enabled }}
         - name: tls
           secret:

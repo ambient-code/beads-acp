@@ -20,3 +20,6 @@ data:
     {{- with .Values.dolt.config }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
+  init-users.sh: |
+    #!/bin/sh
+    dolt sql -q "CREATE USER IF NOT EXISTS 'beads'@'%' IDENTIFIED BY '${BEADS_DOLT_PASSWORD}'; GRANT ALL PRIVILEGES ON *.* TO 'beads'@'%';"
