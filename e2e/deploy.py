@@ -60,17 +60,18 @@ class DeployManager:
         _run(["docker", "login", registry, "--username", user, "--password", token])
         logger.info("Logged into registry %s", registry)
 
+    def _image_tag(self, name: str) -> str:
+        return f"{self.get_registry_route()}/{self.namespace}/{name}:latest"
+
     def build_images(self) -> None:
-        registry = self.get_registry_route()
         for name, containerfile in CONTAINERFILES.items():
-            tag = f"{registry}/{self.namespace}/{name}:latest"
+            tag = self._image_tag(name)
             _run(["docker", "build", "-t", tag, "-f", containerfile, "."])
             logger.info("Built %s", tag)
 
     def push_images(self) -> None:
-        registry = self.get_registry_route()
         for name in CONTAINERFILES:
-            tag = f"{registry}/{self.namespace}/{name}:latest"
+            tag = self._image_tag(name)
             _run(["docker", "push", tag])
             logger.info("Pushed %s", tag)
 

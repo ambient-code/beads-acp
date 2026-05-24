@@ -23,7 +23,7 @@ def _build_header(collector: MetricCollector) -> Panel:
     text = Text()
     text.append("beads-acp E2E Simulation", style="bold white")
     text.append(f"  |  Elapsed: {mins:02d}:{secs:02d}", style="dim")
-    text.append(f"  |  Operations: {len(collector.events)}", style="dim")
+    text.append(f"  |  Operations: {collector.event_count}", style="dim")
     return Panel(text, style="blue")
 
 

@@ -95,13 +95,17 @@ class MCPClient:
         content_type = resp.headers.get("content-type", "")
         if "text/event-stream" in content_type:
             # Parse SSE: look for data: lines containing JSON-RPC responses
+            result = None
             for line in resp.text.splitlines():
                 if line.startswith("data:"):
                     data = json.loads(line[5:].strip())
-                    if "result" in data or "error" in data:
-                        if "error" in data:
-                            raise MCPError(data["error"].get("message", "Unknown error"), data["error"])
-                        return data.get("result", {})
+                    if "error" in data:
+                        raise MCPError(data["error"].get("message", "Unknown error"), data["error"])
+                    if "result" in data:
+                        result = data.get("result", {})
+                        break
+            if result is not None:
+                return result
             raise MCPError("No result in SSE stream")
         else:
             data = resp.json()

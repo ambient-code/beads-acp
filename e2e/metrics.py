@@ -76,6 +76,10 @@ class MetricCollector:
         return list(self._events)
 
     @property
+    def event_count(self) -> int:
+        return len(self._events)
+
+    @property
     def elapsed_seconds(self) -> float:
         return time.monotonic() - self._start_time
 

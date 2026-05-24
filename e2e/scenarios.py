@@ -30,7 +30,6 @@ class Scenario:
             "bootstrap_done": asyncio.Event(),
             "triage_done": asyncio.Event(),
         }
-        self._issues: dict[str, str] = {}  # logical name -> actual issue ID
 
     async def run(self) -> None:
         """Run the full simulation."""
@@ -43,20 +42,16 @@ class Scenario:
         self, client: MCPClient, tool: str, args: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """Call a tool with metric recording and jitter."""
-        await asyncio.sleep(random.uniform(0.5, 2.0))  # simulate think time
+        await asyncio.sleep(random.uniform(0.5, 2.0))
         start = time.monotonic()
         try:
             result = await client.call_tool(tool, args)
             latency = (time.monotonic() - start) * 1000
-            # Try to extract issue ID from result
             issue_id = None
             if isinstance(result, dict):
-                # MCP tool results come back as {"content": [{"text": "..."}]}
-                # The actual issue ID may be in the text content
                 content = result.get("content", [])
                 if content and isinstance(content[0], dict):
                     text = content[0].get("text", "")
-                    # Look for issue ID patterns like "abc-123" in the response
                     if text:
                         for word in text.split():
                             if "-" in word and len(word) < 20:
